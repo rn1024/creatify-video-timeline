@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  margin: 8px;
+}
+
+.droppable {
+  display: flex;
+  margin: 8px;
+}
+
+.draggable {
+  user-select: none;
+  padding: 16px;
+  background-color: lightgrey;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resizer {
+  width: 8px;
+  height: 100%;
+  position: absolute;
+  right: -4px;
+  top: 0;
+  cursor: col-resize;
+}

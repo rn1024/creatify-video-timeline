@@ -1,0 +1,38 @@
+.droppable-list {
+  display: flex;
+  padding: 16px;
+  min-height: 100px;
+  background-color: #f8f8f8;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.draggable-item {
+  user-select: none;
+  padding: 16px;
+  margin: 0 8px 0 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  position: relative;
+}
+
+.draggable-item.dragging {
+  background-color: #e0e0e0;
+}
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: ew-resize;
+  z-index: 10;
+}
+
+.resize-handle.left {
+  left: 0;
+}
+
+.resize-handle.right {
+  right: 0;
+}
