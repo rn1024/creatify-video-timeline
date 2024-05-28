@@ -1,38 +1,38 @@
-.droppable-list {
-  display: flex;
-  padding: 16px;
-  min-height: 100px;
-  background-color: #f8f8f8;
-  overflow-x: auto;
-  margin: 8px 0;
-}
-
-.draggable-item {
-  user-select: none;
-  padding: 16px;
-  margin: 0 8px 0 0;
-  background-color: #fff;
-  border: 1px solid #ddd;
+.timeline {
   position: relative;
+  padding: 10px;
+  background: #333;
+  border: 1px solid #ccc;
 }
 
-.draggable-item.dragging {
-  background-color: #e0e0e0;
+.track {
+  position: relative;
+  height: 60px;
+  margin-bottom: 10px;
+  background: #444;
+  border: 1px solid #888;
 }
 
-.resize-handle {
+.clip {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 5px;
-  cursor: ew-resize;
-  z-index: 10;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #000;
+  cursor: move;
 }
 
-.resize-handle.left {
-  left: 0;
+.clip.video {
+  background: rgba(0, 128, 255, 0.8);
 }
 
-.resize-handle.right {
-  right: 0;
+.clip.audio {
+  background: rgba(0, 255, 128, 0.8);
+}
+
+.material {
+  margin: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #000;
+  cursor: grab;
 }

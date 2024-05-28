@@ -1,144 +1,61 @@
-import React, { useState, useCallback, MouseEvent } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+// Timeline.tsx
+import React, { useState } from 'react';
+import { useDrop } from 'react-dnd';
+import ClipComponent from './Clip';
+import { Clip, Track } from '../types';
 import './Timeline.css';
 
-interface Item {
-  id: string;
-  content: string;
-  width: number;
-}
+const Timeline: React.FC = () => {
+  const [tracks, setTracks] = useState<Track[]>([
+    { id: 1, clips: [{ id: 1, start: 0, end: 10, type: 'video', track: 1 }] },
+    { id: 2, clips: [{ id: 2, start: 12, end: 20, type: 'audio', track: 2 }] },
+  ]);
 
-type List = Item[];
+  const [, drop] = useDrop({
+    accept: 'CLIP',
+    drop: (item: Clip, monitor) => {
+      console.log('Drop event triggered'); // 调试输出
+      const delta = monitor.getDifferenceFromInitialOffset() as { x: number, y: number };
+      const newStart = Math.max(0, item.start + delta.x / 10);
+      const newEnd = Math.max(newStart, item.end + delta.x / 10);
 
-const initialLists: List[] = [
-  [
-    { id: '1', content: 'Item 1', width: 150 },
-    { id: '2', content: 'Item 2', width: 150 },
-    { id: '3', content: 'Item 3', width: 150 },
-  ],
-  [
-    { id: '4', content: 'Item 4', width: 150 },
-    { id: '5', content: 'Item 5', width: 150 },
-    { id: '6', content: 'Item 6', width: 150 },
-  ]
-];
+      const dropClientOffset = monitor.getClientOffset();
+      const dropOffset = monitor.getInitialClientOffset();
 
-const ResizeHandle: React.FC<{ onMouseDown: (e: MouseEvent<HTMLDivElement>) => void; side: 'left' | 'right' }> = ({ onMouseDown, side }) => (
-  <div
-    className={`resize-handle ${side}`}
-    onMouseDown={onMouseDown}
-  />
-);
+      const isNewTrack = dropClientOffset && dropOffset && (dropClientOffset.y - dropOffset.y > 50);
 
-interface DraggableItemProps {
-  item: Item;
-  index: number;
-  listIndex: number;
-  handleResize: (e: MouseEvent<HTMLDivElement>, index: number, listIndex: number, side: 'left' | 'right') => void;
-  isResizing: boolean;
-}
-
-const DraggableItem: React.FC<DraggableItemProps> = ({ item, index, listIndex, handleResize, isResizing }) => (
-  <Draggable
-    key={item.id}
-    draggableId={item.id}
-    index={index}
-    isDragDisabled={isResizing}
-  >
-    {(provided, snapshot) => (
-      <div
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        {...provided.dragHandleProps}
-        className={`draggable-item ${snapshot.isDragging ? 'dragging' : ''}`}
-        style={{ width: item.width, ...provided.draggableProps.style }}
-      >
-        {item.content}
-        <ResizeHandle onMouseDown={(e) => handleResize(e, index, listIndex, 'left')} side="left" />
-        <ResizeHandle onMouseDown={(e) => handleResize(e, index, listIndex, 'right')} side="right" />
-      </div>
-    )}
-  </Draggable>
-);
-
-const TimeLine: React.FC = () => {
-  const [lists, setLists] = useState<List[]>(initialLists);
-  const [isResizing, setIsResizing] = useState(false);
-
-  const onDragEnd = useCallback((result: DropResult) => {
-    if (isResizing) return;
-
-    const { source, destination } = result;
-
-    if (!destination) return;
-
-    const sourceListIndex = parseInt(source.droppableId.split('-')[1], 10);
-    const destinationListIndex = parseInt(destination.droppableId.split('-')[1], 10);
-
-    setLists(prevLists => {
-      const newLists = [...prevLists];
-      const [movedItem] = newLists[sourceListIndex].splice(source.index, 1);
-      newLists[destinationListIndex].splice(destination.index, 0, movedItem);
-      return newLists;
-    });
-  }, [isResizing]);
-
-  const handleResize = useCallback((e: MouseEvent<HTMLDivElement>, index: number, listIndex: number, side: 'left' | 'right') => {
-    e.preventDefault();
-    setIsResizing(true);
-    const startX = e.clientX;
-    const startWidth = lists[listIndex][index].width;
-
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const newWidth = side === 'left' ? startWidth - deltaX : startWidth + deltaX;
-      setLists(prevLists => {
-        const newLists = [...prevLists];
-        newLists[listIndex] = [...newLists[listIndex]];
-        newLists[listIndex][index] = { ...newLists[listIndex][index], width: newWidth > 50 ? newWidth : 50 };
-        return newLists;
-      });
-    };
-
-    const onMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }, [lists]);
+      if (isNewTrack) {
+        // 创建新轨道
+        setTracks([...tracks, { id: tracks.length + 1, clips: [{ ...item, start: newStart, end: newEnd, track: tracks.length + 1 }] }]);
+      } else {
+        // 添加到现有轨道
+        const updatedTracks = tracks.map(track => {
+          if (track.id === item.track) {
+            return {
+              ...track,
+              clips: track.clips.map(clip => clip.id === item.id
+                ? { ...clip, start: newStart, end: newEnd }
+                : clip)
+            };
+          }
+          return track;
+        });
+        setTracks(updatedTracks);
+      }
+    },
+  });
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div>
-        {lists.map((list, listIndex) => (
-          <Droppable key={listIndex} droppableId={`droppable-${listIndex}`} direction="horizontal" isDropDisabled={isResizing}>
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="droppable-list"
-              >
-                {list.map((item, index) => (
-                  <DraggableItem
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    listIndex={listIndex}
-                    handleResize={handleResize}
-                    isResizing={isResizing}
-                  />
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        ))}
-      </div>
-    </DragDropContext>
+    <div className="timeline-container" ref={drop}>
+      {tracks.map(track => (
+        <div key={track.id} className="track">
+          {track.clips.map(clip => (
+            <ClipComponent key={clip.id} clip={clip} />
+          ))}
+        </div>
+      ))}
+    </div>
   );
 };
 
-export default TimeLine;
+export default Timeline;
